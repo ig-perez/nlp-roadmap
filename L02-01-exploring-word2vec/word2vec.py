@@ -84,9 +84,11 @@ def naiveSoftmaxLossAndGradient(
     y_true_o[outsideWordIdx] = 1
     
     loss = -np.log(y_pred_vc[outsideWordIdx])
-    pred_error = y_pred_vc - y_true_o  # The order here is important
+    pred_error = y_pred_vc - y_true_o
 
     gradCenterVec = np.dot(pred_error, outsideVectors)  # dJ/dv_c
+    
+    # Outer: Notice we need a matrix as a result to follow the shape convention
     gradOutsideVecs = np.outer(pred_error, centerWordVec)  # dJ/dU
 
     ### Please use the provided softmax function (imported earlier in this file)
@@ -147,24 +149,30 @@ def negSamplingLossAndGradient(
     v_c = centerWordVec
     uovc = np.dot(u_o, v_c)
 
-    loss = -np.log(sigmoid(uovc)) - sum([
-        np.log(sigmoid(np.dot(-u_k, v_c))) for u_k in outsideVectors[negSampleWordIndices]
-        ])
-
-    gradCenterVec = np.dot(u_o, sigmoid(uovc) - 1) - sum([
-        np.dot(u_k, sigmoid(np.dot(-u_k, v_c)) - 1) for u_k in outsideVectors[negSampleWordIndices]
-        ])
-
     # We calculate two cases: dJ/u_o and dJ/u_k for the K samples given u_o
     # doesn't belong to the K samples
     gradOutsideVecs = np.zeros_like(outsideVectors)
 
-    for k in indices:
-        if k == outsideWordIdx:  # the current context word u_o
-            gradOutsideVecs[outsideWordIdx] = np.dot(v_c, sigmoid(uovc) - 1)
-        else:
-            u_k = outsideVectors[k]  # a negative sample
-            gradOutsideVecs[k] += np.dot(-v_c, sigmoid(np.dot(-u_k, v_c)) - 1)
+    # dJ/u_o
+    gradOutsideVecs[outsideWordIdx] = np.dot(v_c, sigmoid(uovc) - 1)
+
+    # For the negative samples
+    sum_for_loss = 0
+    sum_for_dJ_vc = 0
+
+    for k in negSampleWordIndices:
+        u_k = outsideVectors[k]
+        minusukvc = np.dot(-u_k, v_c)
+
+        # dJ/u_k
+        gradOutsideVecs[k] += np.dot(-v_c, sigmoid(minusukvc) - 1)
+
+        # Let's take advantage of the for loop
+        sum_for_loss += np.log(sigmoid(minusukvc))
+        sum_for_dJ_vc += np.dot(u_k, sigmoid(minusukvc) - 1)
+
+    loss = -np.log(sigmoid(uovc)) - sum_for_loss
+    gradCenterVec = np.dot(u_o, sigmoid(uovc) - 1) - sum_for_dJ_vc
     ### Please use your implementation of sigmoid in here.
 
     ### END YOUR CODE
@@ -212,7 +220,19 @@ def skipgram(currentCenterWord, windowSize, outsideWords, word2Ind,
     gradOutsideVectors = np.zeros(outsideVectors.shape)
 
     ### YOUR CODE HERE (~8 Lines)
+    vc_idx = word2Ind[currentCenterWord]
 
+    for u_o in outsideWords:
+        partial = word2vecLossAndGradient(
+            centerWordVectors[vc_idx],
+            word2Ind[u_o],  # index of the U matrix for current context word
+            outsideVectors,
+            dataset
+            )
+
+        loss += partial[0]
+        gradCenterVecs[vc_idx] += partial[1]  # Update the parameter v_c
+        gradOutsideVectors += partial[2]  # Update the parameter U
     ### END YOUR CODE
     
     return loss, gradCenterVecs, gradOutsideVectors

@@ -86,7 +86,8 @@ def sgd(f, x0, step, iterations, postprocessing=None, useSaved=False,
 
         loss = None
         ### YOUR CODE HERE (~2 lines)
-
+        loss, params_gradients = f(x)  # Notice x initialized to x0 in line 77
+        x = x - step*params_gradients  # The new set of parameters \theta
         ### END YOUR CODE
 
         x = postprocessing(x)
