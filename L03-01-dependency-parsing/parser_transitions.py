@@ -21,8 +21,12 @@ class PartialParse(object):
 
         ### YOUR CODE HERE (3 Lines)
         self.stack = ["ROOT"]
-        self.buffer = [word for word in sentence]  # Deep copy without deepcopy()
+
+        # Since sentence doesn't have nested objects no need for deepcopy
+        self.buffer = sentence[:]  # [:] == sentence.copy() but faster
+
         self.dependencies = []
+
         ### Your code should initialize the following fields:
         ###     self.stack: The current stack represented as a list with the top of the stack as the
         ###                 last element of the list.
@@ -48,7 +52,7 @@ class PartialParse(object):
                                 transition is a legal transition.
         """
         ### YOUR CODE HERE (~7-12 Lines)
-        if transition == "S":  # We need deepcopy because of the pop
+        if transition == "S":  # buffer = sentence will break with pop below!
             self.stack.append(self.buffer.pop(0))
         elif transition == "LA":  # Last buffer item is the head
             self.dependencies.append((self.stack[-1], self.stack[-2]))
@@ -73,7 +77,7 @@ class PartialParse(object):
             self.parse_step(transition)
         return self.dependencies
 
-# FIXME
+
 def minibatch_parse(sentences, model, batch_size):
     """Parses a list of sentences in minibatches using a model.
 
@@ -95,10 +99,10 @@ def minibatch_parse(sentences, model, batch_size):
     dependencies = []
 
     ### YOUR CODE HERE (~8-10 Lines)
-    partial_parsers = [PartialParse(sentence) for sentence in sentences]
-    unfinished_parses = partial_parsers
+    partial_parses = [PartialParse(sentence) for sentence in sentences]
+    unfinished_parses = partial_parses[:]
 
-    while len(unfinished_parses) > 0:
+    while unfinished_parses:  # len() > 0 is slightly more expensive
         minibatch = unfinished_parses[0:batch_size]
         minibatch_trans = model.predict(minibatch)  # ["S", "LA", ...]
 
@@ -108,11 +112,16 @@ def minibatch_parse(sentences, model, batch_size):
         temp = []
         for partialPars in unfinished_parses:
             if len(partialPars.stack) == 1 and len(partialPars.buffer) == 0:
-                dependencies.append(partialPars.dependencies)
+                # Adding the dependencies of the finished partial parse here
+                # will cause issues since the ordering might not match the 
+                # sentences ordering!
+                pass
             else:
                 temp.append(partialPars)
 
         unfinished_parses = [partialPars for partialPars in temp]
+
+    dependencies = [partialPars.dependencies for partialPars in partial_parses]
     ### END YOUR CODE
 
     return dependencies
