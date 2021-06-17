@@ -1,0 +1,3 @@
+1. create a virtual env with: conda create --name cs224n_a3 python=3.7 (notice python= will make a fuzzy search of the version, meaning 3.7.0, 3.7.1, etc)
+2. activate the env with: conda activate cs224n_a3
+3. Install the packages with: conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cpuonly -c pytorch will install the cpu only version (notice the double = for a specific version)
