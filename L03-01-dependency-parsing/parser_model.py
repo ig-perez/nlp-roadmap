@@ -110,9 +110,15 @@ class ParserModel(nn.Module):
         """
 
         ### YOUR CODE HERE (~1-4 Lines)
-        temp = [torch.index_select(self.embeddings,0, w_i) for w_i in w]
         
-        x = torch.cat(temp).view(w.shape[0], self.n_features*self.embed_size)
+        # First flatten w and retrieve all embeedings with index_select. Then 
+        # reshape the embeddings to (batch_size, n_features * embed_size)
+        # Notice: w.view(-1) == torch.flatten(w)
+        
+        x = torch.index_select(self.embeddings, 0, torch.flatten(w)).view(
+            w.shape[0],
+            self.n_features*self.embed_size
+            )
 
         ### TODO:
         ###     1) For each index `i` in `w`, select `i`th vector from self.embeddings

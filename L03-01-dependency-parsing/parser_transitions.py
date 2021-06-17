@@ -26,21 +26,6 @@ class PartialParse(object):
         self.buffer = sentence[:]  # [:] == sentence.copy() but faster
 
         self.dependencies = []
-
-        ### Your code should initialize the following fields:
-        ###     self.stack: The current stack represented as a list with the top of the stack as the
-        ###                 last element of the list.
-        ###     self.buffer: The current buffer represented as a list with the first item on the
-        ###                  buffer as the first item of the list
-        ###     self.dependencies: The list of dependencies produced so far. Represented as a list of
-        ###             tuples where each tuple is of the form (head, dependent).
-        ###             Order for this list doesn't matter.
-        ###
-        ### Note: The root token should be represented with the string "ROOT"
-        ### Note: If you need to use the sentence object to initialize anything, make sure to not directly 
-        ###       reference the sentence object.  That is, remember to NOT modify the sentence object. 
-
-
         ### END YOUR CODE
 
 
@@ -109,17 +94,13 @@ def minibatch_parse(sentences, model, batch_size):
         for idx, partialPars in enumerate(minibatch):
             partialPars.parse_step(minibatch_trans[idx])
 
-        temp = []
-        for partialPars in unfinished_parses:
+            # Check if partialPars is done. No need to check the other partial
+            # parsers since we are only updating the ones in the minibatch!
             if len(partialPars.stack) == 1 and len(partialPars.buffer) == 0:
                 # Adding the dependencies of the finished partial parse here
                 # will cause issues since the ordering might not match the 
                 # sentences ordering!
-                pass
-            else:
-                temp.append(partialPars)
-
-        unfinished_parses = [partialPars for partialPars in temp]
+                unfinished_parses.remove(partialPars)
 
     dependencies = [partialPars.dependencies for partialPars in partial_parses]
     ### END YOUR CODE
