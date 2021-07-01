@@ -61,21 +61,21 @@ class NMT(nn.Module):
             )
 
         self.decoder = nn.LSTMCell(
-            input_size=embed_size+embed_size,  # !! This is \bar{y}_t
+            input_size= hidden_size + embed_size,  # !! This is \bar{y}_t
             hidden_size=hidden_size,
             bias=True
         )
 
         # Linear projection with W_{h}
         self.h_projection = nn.Linear(
-            in_features=hidden_size*2,  # We receive [h_t <-; h_t ->]
+            in_features=hidden_size*2,  # We receive [h_1 <-; h_m ->]
             out_features=hidden_size,  # We obtain a hidden-size vector
             bias=False
         )
 
         # Projection with W_{c}
         self.c_projection = nn.Linear(
-            in_features=hidden_size*2,  # We receive [c_t <-; c_t ->]
+            in_features=hidden_size*2,  # We receive [c_1 <-; c_m ->]
             out_features=hidden_size,  # We obtain a hidden-size vector
             bias=False
         )
@@ -185,16 +185,16 @@ class NMT(nn.Module):
         
         # 1. Constructing X: source_padded contains the indexes to use for embeddings lookup
         X_embeds = self.model_embeddings.source(source_padded)  # This adds e to the shape
-        X = pack_padded_sequence(X_embeds,source_lengths)  ## NOTION this!
+        X = pack_padded_sequence(X_embeds,source_lengths)
 
-        # 2. Encode the batch
-        enc_hiddens, (last_hidden, last_cell) = self.encoder(X)  # h_0 and c_0 are zeroes (default values)
+        # 2. Encode the batch. PyTorch LSTM implementation inputs are: input, (h_0, c_0)
+        enc_hiddens, (last_hidden, last_cell) = self.encoder(X)  # Defaults to zeros if (h_0, c_0) is not provided
         enc_hiddens, output_lens = pad_packed_sequence(enc_hiddens)  # We don't need output_lens, unless we want to assert just in case
         enc_hiddens = enc_hiddens.permute(1, 0, 2)
 
         # 3. Compute the decoder initial state
         # init_decoder_hidden
-        last_hidden_flat = torch.cat((last_hidden[0], last_hidden[1]), 1)
+        last_hidden_flat = torch.cat((last_hidden[0], last_hidden[1]), 1)  # last_hidden[i] already returns a tensor with shape (b, h)
         init_decoder_hidden = self.h_projection(last_hidden_flat)
 
         # init_decoder_cell
@@ -271,6 +271,29 @@ class NMT(nn.Module):
         combined_outputs = []
 
         ### YOUR CODE HERE (~9 Lines)
+        enc_hiddens_proj = self.att_projection(enc_hiddens)  # The projection layer is only W_{attProj}h^{enc}
+
+        Y = self.model_embeddings.target(target_padded)  # No need to pack this?
+
+        for Y_t in torch.split(Y, 1):  # Y_t is a batch of the i-th word of all sentences
+            Y_t = torch.squeeze(Y_t, 0)  # Squeeze removes all the dimensions of input of size 1
+
+            Ybar_t = torch.cat((Y_t, o_prev), 1)
+
+            dec_state, o_t, e_t = self.step(
+                Ybar_t,
+                dec_state,
+                enc_hiddens,
+                enc_hiddens_proj,
+                enc_masks
+                )
+
+            combined_outputs.append(o_t)
+
+            o_prev = o_t
+
+        combined_outputs = torch.stack(combined_outputs)
+
         ### TODO:
         ###     1. Apply the attention projection layer to `enc_hiddens` to obtain `enc_hiddens_proj`,
         ###         which should be shape (b, src_len, h),
@@ -342,6 +365,13 @@ class NMT(nn.Module):
         combined_output = None
 
         ### YOUR CODE HERE (~3 Lines)
+
+        # PyTorch LSTMCell implementation inputs are: input, (h_0, c_0). If (h_0, c_0) is not provided, both h_0 and c_0 default to zero.
+        dec_hidden, dec_cell = self.decoder(Ybar_t, dec_state)
+        dec_state = (dec_hidden, dec_cell)
+        e_t = torch.bmm(enc_hiddens_proj, torch.unsqueeze(dec_hidden, 2))
+        e_t = torch.squeeze(e_t, 2)
+
         ### TODO:
         ###     1. Apply the decoder to `Ybar_t` and `dec_state`to obtain the new dec_state.
         ###     2. Split dec_state into its two parts (dec_hidden, dec_cell)
@@ -369,10 +399,21 @@ class NMT(nn.Module):
 
         # Set e_t to -inf where enc_masks has 1
         if enc_masks is not None:
-            e_t.data.masked_fill_(enc_masks.byte(), -float('inf'))
+            e_t.data.masked_fill_(enc_masks.bool(), -float('inf'))
 
         ### YOUR CODE HERE (~6 Lines)
         ### TODO:
+        alpha_t = F.softmax(e_t, 1)  # Implicit softmax's dimension choice is deprecated
+
+        a_t = torch.bmm(torch.unsqueeze(alpha_t, 1), enc_hiddens)
+        a_t = torch.squeeze(a_t, 1)
+
+        U_t = torch.cat((dec_hidden, a_t), 1)
+
+        V_t = self.combined_output_projection(U_t)
+
+        O_t = self.dropout(torch.tanh(V_t))  # F.tanh is deprecated
+
         ###     1. Apply softmax to e_t to yield alpha_t
         ###     2. Use batched matrix multiplication between alpha_t and enc_hiddens to obtain the
         ###         attention output vector, a_t.
