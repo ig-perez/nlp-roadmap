@@ -10,7 +10,8 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["train", "--train-src=./en_es_data/train.es", "--train-tgt=./en_es_data/train.en", "--dev-src=./en_es_data/dev.es", "--dev-tgt=./en_es_data/dev.en", "--vocab=vocab.json"]
+      "args": ["decode", "./training_results/model.bin", "./en_es_data/test.es", "./en_es_data/test.en", "outputs/test_outputs.txt"]
+      //"args": ["train", "--train-src=./en_es_data/train.es", "--train-tgt=./en_es_data/train.en", "--dev-src=./en_es_data/dev.es", "--dev-tgt=./en_es_data/dev.en", "--vocab=vocab.json"]
     }
   ]
 }

@@ -45,6 +45,8 @@ import sys
 import pickle
 import time
 
+# import warnings
+# warnings.filterwarnings("error")  # This helps better poinpoint location of warnings
 
 from docopt import docopt
 from nltk.translate.bleu_score import corpus_bleu, sentence_bleu, SmoothingFunction
