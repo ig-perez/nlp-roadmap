@@ -34,8 +34,10 @@ class ModelEmbeddings(nn.Module):
         tgt_pad_token_idx = vocab.tgt['<pad>']
 
         ### YOUR CODE HERE (~2 Lines)
-        # We are going to learn the embeddings from the dataset! How? No idea!
-        # NOTION: We can later query these layers to get the embeddings when
+        # We are going to learn the embeddings from the dataset! Probably this
+        # is the best option for this task since we are going to train encoder
+        # and decoder simultaneously to learn the same context vector
+        # representation. We can later query these layers to get the embeddings
         # passing some indexes as parameters.
         self.source = nn.Embedding(len(vocab.src), embed_size, src_pad_token_idx)
         self.target = nn.Embedding(len(vocab.tgt), embed_size, tgt_pad_token_idx)

@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+CS224N 2021: Homework 4
+nmt_model.py: A super simple Spanish-English translator based on the NMT
+              model trained in this repository.
+Iván Pérez <dev@ivanperez.pe>
+"""
+
 import os
 from run import beam_search
 from nmt_model import Hypothesis, NMT

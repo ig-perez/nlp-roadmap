@@ -122,8 +122,6 @@ class NMT(nn.Module):
         ###         https://pytorch.org/docs/stable/nn.html#torch.nn.Linear
         ###     Dropout Layer:
         ###         https://pytorch.org/docs/stable/nn.html#torch.nn.Dropout
-
-
         ### END YOUR CODE
 
 
@@ -328,8 +326,6 @@ class NMT(nn.Module):
         ###         https://pytorch.org/docs/stable/torch.html#torch.cat
         ###     Tensor Stacking:
         ###         https://pytorch.org/docs/stable/torch.html#torch.stack
-
-
         ### END YOUR CODE
 
         return combined_outputs
@@ -368,7 +364,7 @@ class NMT(nn.Module):
 
         # PyTorch LSTMCell implementation inputs are: input, (h_0, c_0). If (h_0, c_0) is not provided, both h_0 and c_0 default to zero.
         dec_hidden, dec_cell = self.decoder(Ybar_t, dec_state)
-        dec_state = (dec_hidden, dec_cell)
+        dec_state = (dec_hidden, dec_cell)  # The new decoder states
         e_t = torch.bmm(enc_hiddens_proj, torch.unsqueeze(dec_hidden, 2))
         e_t = torch.squeeze(e_t, 2)
 
