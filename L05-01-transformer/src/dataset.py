@@ -167,8 +167,49 @@ class CharCorruptionDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        # TODO [part e]: see spec above
-        raise NotImplementedError
+        doc = self.data[idx]
+        
+        # Step 1
+        rdn = random.randint(4, int(self.block_size*7/8))
+        trunc_doc = doc[:rdn]
+
+        assert rdn >= 4 and rdn <= int(self.block_size*7/8)
+
+        # Step 2
+        mask_len = int(random.gauss(len(trunc_doc)/4,1))
+        if (len(trunc_doc)-mask_len)&1:  # odd
+            pre_len = (len(trunc_doc)-mask_len)//2
+            suf_len = len(trunc_doc) - (pre_len + mask_len)
+        else:  # even
+            pre_len = suf_len = (len(trunc_doc)-mask_len)//2
+        prefix = trunc_doc[0:pre_len]
+        masked_content = trunc_doc[pre_len:pre_len+mask_len]
+        suffix = trunc_doc[-suf_len:]
+
+        assert prefix + masked_content + suffix == trunc_doc
+        
+        # Step 3
+        pad_len = self.block_size - (
+            pre_len + len(self.MASK_CHAR)*2 + suf_len + mask_len
+        )
+        masked_string = prefix + \
+                        self.MASK_CHAR + \
+                        suffix + \
+                        self.MASK_CHAR + \
+                        masked_content + \
+                        self.PAD_CHAR*(pad_len)
+
+        assert len(masked_string) == self.block_size
+
+        # Step 4
+        x = masked_string[:-1]
+        y = masked_string[1:]
+
+        # Step 5
+        x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
+        y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
+
+        return x, y
 
 """
 Code under here is strictly for your debugging purposes; feel free to modify
