@@ -66,66 +66,48 @@ elif args.variant == 'synthesizer':
 if args.function == 'pretrain':
     assert args.pretrain_corpus_path is not None
     assert args.writing_params_path is not None
-    # TODO [part f]:
-    # - Given:
-    #     1. A corpus specified in args.pretrain_corpus_path
-    #     2. An output path args.writing_params_path for the model parameters
-    # - Goals:
-    #     1. Pretrain the model on this corpus
-    #     2. Save the resulting model in args.writing_params_path
-    # - Make sure to use the following hyperparameters for pretraining:
-    #     max_epochs=650
-    #     batch_size=128
-    #     learning_rate=6e-3
-    #     lr_decay=True
-    #     warmup_tokens=512*20
-    #     final_tokens=200*len(pretrain_dataset)*block_size
-    #     num_workers=4
-    raise NotImplementedError
+
+    # [part f]:
+    tconf = trainer.TrainerConfig(
+        max_epochs=650,
+        batch_size=128,
+        learning_rate=6e-3,
+        lr_decay=True,
+        warmup_tokens=512*20,
+        final_tokens=200*len(pretrain_dataset)*block_size,
+        num_workers=4
+    )
+
+    trainer = trainer.Trainer(model, pretrain_dataset, None, tconf)
+    trainer.train()
+
+    torch.save(model.state_dict(), args.writing_params_path)
 elif args.function == 'finetune':
     assert args.writing_params_path is not None
     assert args.finetune_corpus_path is not None
-    # TODO [part f]:
-    # - Given:
-    #     1. A finetuning corpus specified in args.finetune_corpus_path
-    #     2. A path args.reading_params_path containing pretrained model
-    #         parameters, or None if finetuning without a pretrained model
-    #     3. An output path args.writing_params_path for the model parameters
-    # - Goals:
-    #     1. If args.reading_params_path is specified, load these parameters
-    #         into the model
-    #     2. Finetune the model on this corpus
-    #     3. Save the resulting model in args.writing_params_path
-    #     Hyperparameters for finetuning WITH a pretrained model:
-    #         max_epochs=10
-    #         batch_size=256
-    #         learning_rate=6e-4
-    #         lr_decay=True
-    #         warmup_tokens=512*20
-    #         final_tokens=200*len(pretrain_dataset)*block_size
-    #         num_workers=4
+    
+    # [part f]:
+    
+    # Prepare dataset for finetuning. Pretrain_dataset is always wiki
+    name_dataset = dataset.NameDataset(
+        pretrain_dataset,
+        open(args.finetune_corpus_path).read()
+    )
 
-    # TODO [part c]:
-    # - Make sure to use the following hyperparameters:
-    #     Hyperparameters for finetuning WITHOUT a pretrained model:
-    #         max_epochs=75
-    #         batch_size=256
-    #         learning_rate=6e-4
-    #         lr_decay=True
-    #         warmup_tokens=512*20
-    #         final_tokens=200*len(pretrain_dataset)*block_size
-    #         num_workers=4
+    if args.reading_params_path:  # Pre trained parameters available
+        model.load_state_dict(torch.load(args.reading_params_path))
 
-    if args.reading_params_path:
-        # part f
-        pass
-    else:
-        # prepare dataset for finetuning
-        name_dataset = dataset.NameDataset(
-            pretrain_dataset,
-            open(args.finetune_corpus_path).read()
+        tconf = trainer.TrainerConfig(
+            max_epochs=10,
+            batch_size=256,
+            learning_rate=6e-4,
+            lr_decay=True,
+            warmup_tokens=512*20,
+            final_tokens=200*len(pretrain_dataset)*block_size,
+            num_workers=4
         )
-
+    else:
+        # [part c]:
         tconf = trainer.TrainerConfig(
             max_epochs=75,
             batch_size=256,
@@ -136,14 +118,12 @@ elif args.function == 'finetune':
             num_workers=4
         )
         
-        # I guess no test set is needed for finetuning?
-        trainer = trainer.Trainer(model,name_dataset, None, tconf)
-        trainer.train()
+    # I guess no test set is needed for finetuning?
+    trainer = trainer.Trainer(model,name_dataset, None, tconf)
+    trainer.train()
 
-        # Save like this to later evaluate on the dev set!
-        torch.save(model.state_dict(), args.writing_params_path)
-
-    # raise NotImplementedError
+    # Save like this to later evaluate on the dev set!
+    torch.save(model.state_dict(), args.writing_params_path)
 elif args.function == 'evaluate':
     assert args.outputs_path is not None
     assert args.reading_params_path is not None
