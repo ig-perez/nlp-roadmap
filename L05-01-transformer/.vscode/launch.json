@@ -26,13 +26,11 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "args": [
-        "finetune",
+        "pretrain",
         "vanilla",
         "wiki.txt",
         "--writing_params_path",
-        "vanilla.model.params",
-        "--finetune_corpus_path",
-        "birth_places_train.tsv"
+        "vanilla.pretrain.params"
       ]
     }
   ]

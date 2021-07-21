@@ -1,3 +1,4 @@
+import sys
 import random
 import torch
 from torch.utils.data import Dataset
@@ -173,21 +174,27 @@ class CharCorruptionDataset(Dataset):
         rdn = random.randint(4, int(self.block_size*7/8))
         trunc_doc = doc[:rdn]
 
-        assert rdn >= 4 and rdn <= int(self.block_size*7/8)
-
         # Step 2
-        mask_len = int(random.gauss(len(trunc_doc)/4,1))
-        if (len(trunc_doc)-mask_len)&1:  # odd
-            pre_len = (len(trunc_doc)-mask_len)//2
-            suf_len = len(trunc_doc) - (pre_len + mask_len)
-        else:  # even
-            pre_len = suf_len = (len(trunc_doc)-mask_len)//2
-        prefix = trunc_doc[0:pre_len]
-        masked_content = trunc_doc[pre_len:pre_len+mask_len]
-        suffix = trunc_doc[-suf_len:]
+        try:
+            # Bigger std. deviation might produce len(mask_len) = len(trunc_doc)
+            mask_len = int(random.gauss(len(trunc_doc)/4,0.25))
+            if (len(trunc_doc)-mask_len)&1:  # odd
+                pre_len = (len(trunc_doc)-mask_len)//2
+                suf_len = len(trunc_doc) - (pre_len + mask_len)
+            else:  # even
+                pre_len = suf_len = (len(trunc_doc)-mask_len)//2
+            prefix = trunc_doc[0:pre_len]
+            masked_content = trunc_doc[pre_len:pre_len+mask_len]
+            suffix = trunc_doc[-suf_len:]
 
-        assert prefix + masked_content + suffix == trunc_doc
-        
+            assert prefix + masked_content + suffix == trunc_doc
+        except AssertionError:
+            print("Error while masking:")
+            print(f"trunc_doc={trunc_doc}")
+            print(f"prefix={prefix}")
+            print(f"masked_content={masked_content}")
+            sys.exit(1)
+
         # Step 3
         pad_len = self.block_size - (
             pre_len + len(self.MASK_CHAR)*2 + suf_len + mask_len
