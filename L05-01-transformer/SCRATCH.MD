@@ -25,3 +25,20 @@
    command: python src/run.py evaluate vanilla wiki.txt --reading_params_path vanilla.model.params --eval_corpus_path birth_test_inputs.tsv --outputs_path vanilla.nopretrain.test.predictions
 
 4. London baseline (the accuracy if the model would predict London for each line of the dev set): Correct: 25.0 out of 500.0: 5.0%
+
+### Part f
+1. Pretrain model
+    python src/run.py pretrain vanilla wiki.txt --writing_params_path vanilla.pretrain.params
+
+2. Finetune
+    python src/run.py finetune vanilla wiki.txt --reading_params_path vanilla.pretrain.params --writing_params_path vanilla.finetune.params --finetune_corpus_path birth_places_train.tsv
+
+3. Evaluate on dev set
+    python src/run.py evaluate vanilla wiki.txt --reading_params_path vanilla.finetune.params --eval_corpus_path birth_dev.tsv --outputs_path vanilla.pretrain.dev.predictions
+
+4. Evaluate on test set
+    python src/run.py evaluate vanilla wiki.txt --reading_params_path vanilla.finetune.params --eval_corpus_path birth_test_inputs.tsv --outputs_path vanilla.pretrain.test.predictions
+
+### Part g
+1. Pretrain the model
+    python src/run.py pretrain synthesizer wiki.txt --writing_params_path synthesizer.pretrain.params

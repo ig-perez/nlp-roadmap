@@ -46,7 +46,10 @@ class Block(nn.Module):
         if config.additive:
             self.attn = attention.AdditiveSelfAttention(config)
         else:
-            self.attn = attention.CausalSelfAttention(config)
+            if config.variant == "synthesizer":
+                self.attn = attention.SynthesizerAttention(config)
+            else:
+                self.attn = attention.CausalSelfAttention(config)
         self.mlp = nn.Sequential(
             nn.Linear(config.n_embd, 4 * config.n_embd),
             nn.GELU(),

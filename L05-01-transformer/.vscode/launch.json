@@ -5,12 +5,28 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Synth",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "args": [
+        "pretrain",
+        "synthesizer",
+        "wiki.txt",
+        "--writing_params_path",
+        "synthesizer.pretrain.params"
+      ]
+    },
+    {
       "name": "Python: charCorruption",
       "type": "python",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
-      "args": ["charcorruption"]
+      "args": [
+        "charcorruption"
+      ]
     },
     {
       "name": "Python: Current File",
