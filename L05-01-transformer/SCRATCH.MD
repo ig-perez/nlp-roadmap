@@ -42,3 +42,12 @@
 ### Part g
 1. Pretrain the model
     python src/run.py pretrain synthesizer wiki.txt --writing_params_path synthesizer.pretrain.params
+
+2. Finetune
+    python src/run.py finetune synthesizer wiki.txt --reading_params_path synthesizer.pretrain.params --writing_params_path synthesizer.finetune.params --finetune_corpus_path birth_places_train.tsv
+
+3. Evaluate on dev
+   python src/run.py evaluate synthesizer wiki.txt --reading_params_path synthesizer.finetune.params --eval_corpus_path birth_dev.tsv --outputs_path synthesizer.pretrain.dev.predictions
+
+4. Evaluate on test
+   python src/run.py evaluate synthesizer wiki.txt --reading_params_path synthesizer.finetune.params --eval_corpus_path birth_test_inputs.tsv --outputs_path synthesizer.pretrain.test.predictions
