@@ -89,12 +89,8 @@ class SynthesizerAttention(nn.Module):
         nn.init.uniform_(self.w2,-0.001,0.001)
 
     def forward(self, x, layer_past=None):
-        # TODO [part g]: Write your SynthesizerAttention below.
+        # [part g]: Write your SynthesizerAttention below.
         #   Do not modify __init__().
-        # Hints:
-        #   - Paste over the CausalSelfAttention above and modify it minimally.
-        #   - Consider especially the parameters self.w1, self.w2 and self.b2.
-        #       How do these map to the matrices in the handout?
 
         # b: Batch size (one sentence per batch?)
         # l: Input lenght (words on current sentence)
@@ -116,8 +112,8 @@ class SynthesizerAttention(nn.Module):
         # i.e. b*l*h*d/h = b*l*d. Notice x.view(b, l, h, d//h).transpose(1,2) != x.view(b, h, l, d//h)
         # Note: For evaluation time it is needed to make w2.unsqueeze(0).unsqueeze(0)[..., :l] to 
         # shape it as (1, 1, d//h, l) before @ with relu, same happens with the
-        # sum with b2 (with b2[..., :l]) at training time PyTorch can handle with those changes!
-        # Not sure why, perhaps because at eval time l has different size
+        # sum with b2 (with b2[..., :l]) at training time PyTorch can handle those changes,
+        # not sure why, perhaps because at eval time l has different size
         w2 = self.w2.unsqueeze(0).unsqueeze(0)[..., :l]  # (1, 1, d//h, l)
         b2 = self.b2[..., :l]
 

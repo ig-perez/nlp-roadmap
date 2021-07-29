@@ -55,7 +55,7 @@ Don't change above here; write your code below
 """
 
 if args.variant == 'vanilla':
-    # [part c]: Notice we are sending the model to current device!
+    # [part c]:
     mconf = model.GPTConfig(pretrain_dataset.vocab_size, pretrain_dataset.block_size,
     n_layer=4, n_head=8, n_embd=256, variant="vanilla")
 elif args.variant == 'synthesizer':
@@ -63,6 +63,7 @@ elif args.variant == 'synthesizer':
     mconf = model.GPTConfig(pretrain_dataset.vocab_size, pretrain_dataset.block_size,
     n_layer=4, n_head=8, n_embd=256, variant="synthesizer")
 
+# Notice we are sending the model to current device!
 model = model.GPT(mconf).to(device)
 
 # From here on, your code should be identical independent of which
