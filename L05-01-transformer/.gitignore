@@ -1,0 +1,4 @@
+.DS_Store
+__pycache__
+*.tar.gz
+training_results
