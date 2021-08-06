@@ -21,7 +21,7 @@ Enjoy!
 - **L05-01-transformer**: This project implements a Transformer model with Multi-Headed Self-Attention to predict the birthplace of a person. It uses pretraining to improve performance and explores alternatives to the scaled dot-product scoring function. Read the accompanying article [here](https://ivanperez.pe/blog/nlp05-transformer-pretraining).
 
 # Prerequisites to consider
-You don't need to be an expert, but I'd recommend some background of the following fields:
+You don't need to be an expert, but I'd recommend some background in the following fields:
 - Coding with Python and NumPy
 - Multivariate calculus
 - Linear Algebra
